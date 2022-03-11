@@ -16,6 +16,15 @@ int distance; // variable for the distance measurement
 #define echoPin 8 // attach pin D8 Arduino to pin Echo of HC-SR04
 #define trigPin 7 //attach pin D7  Arduino to pin Trig of HC-SR04
 
+//#define DEBUG
+#ifdef DEBUG
+  #define DEBUG_PRINTLN(x) Serial.println(x)
+  #define DEBUG_PRINT(x) Serial.print(x)
+#elseifdef DEBUG
+  #define DEBUG_PRINTLN(x)
+  #define DEBUG_PRINT(x)
+#endif
+
 void setup() {
   pinMode(ENA, OUTPUT);   // set all the motor control pins to outputs
   pinMode(ENB, OUTPUT);
@@ -24,9 +33,13 @@ void setup() {
 
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an OUTPUT
   pinMode(echoPin, INPUT); // Sets the echoPin as an INPUT
-  Serial.begin(9600); // // Serial Communication is starting with 9600 of baudrate speed
-  Serial.println("Ultrasonic Sensor HC-SR04 Test"); // print some text in Serial Monitor
-  Serial.println("with Arduino UNO R3");
+  
+  
+  #ifdef DEBUG
+    Serial.begin(9600); // // Serial Communication is starting with 9600 of baudrate speed
+  #endif
+  DEBUG_PRINTLN("Ultrasonic Sensor HC-SR04 Test"); // print some text in Serial Monitor
+  DEBUG_PRINTLN("with Arduino UNO R3");
 }
 
 void loop() {
@@ -50,9 +63,9 @@ void Distance(){
   // Calculating the distance
   distance = duration * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
   // Displays the distance on the Serial Monitor
-  Serial.print("Distance: ");
-  Serial.print(distance);
-  Serial.println(" cm");
+  DEBUG_PRINT("Distance: ");
+  DEBUG_PRINT(distance);
+  DEBUG_PRINTLN(" cm");
 }
 
 // Forward(int s) drives the robot forward
@@ -60,7 +73,7 @@ void Distance(){
 // int s: sets the speed of the robot between 0-100 percent
 void Forward (int s)
 {
-  Motor('C', 'F', s);
+  Motor('B', 'F', s);
 }
 
 // Backward(int s) drives the robot forward
@@ -68,7 +81,7 @@ void Forward (int s)
 // int s: sets the speed of the robot between 0-100 percent
 void Backward (int s)
 {
-  Motor('C', 'R', s);
+  Motor('B', 'R', s);
 }
 
 // Stop(int s) drives the robot forward
@@ -76,7 +89,7 @@ void Backward (int s)
 // int s: sets the speed of the robot between 0-100 percent
 void Stop ()
 {
-  Motor('C', 'F', 0);
+  Motor('B', 'F', 0);
 }
 
 // TurnLeft(int s) drives the robot forward
@@ -84,8 +97,8 @@ void Stop ()
 // int s: sets the speed of the robot between 0-100 percent
 void TurnLeft (int s)
 {
-  Motor('A', 'R', s);
-  Motor('B', 'F', s);
+  Motor('R', 'R', s);
+  Motor('L', 'F', s);
 }
 
 // TurnRight(int s) drives the robot forward
@@ -93,13 +106,13 @@ void TurnLeft (int s)
 // int s: sets the speed of the robot between 0-100 percent
 void TurnRight (int s)
 {
-  Motor('A', 'F', s);
-  Motor('B', 'R', s);
+  Motor('R', 'F', s);
+  Motor('L', 'R', s);
 }
 
 /*
  * Motor function does all the heavy lifting of controlling the motors
- * mot = motor to control either 'A' or 'B'.  'C' controls both motors.
+ * mot = motor to control either 'R' or 'L'.  'B' controls both motors.
  * dir = Direction either 'F'orward or 'R'everse
  * speed = Speed.  Takes in 1-100 percent and maps to 0-255 for PWM control.  
  * Mapping ignores speed values that are too low to make the motor turn.
@@ -115,7 +128,7 @@ void Motor(char mot, char dir, int speed)
     newspeed = map(speed, 1, 100, MIN_SPEED, 255);
 
   switch (mot) {
-    case 'A':   // Controlling Motor A
+    case 'R':   // Controlling Right
       if (dir == 'F') {
         digitalWrite(INA, HIGH);
       }
@@ -125,7 +138,7 @@ void Motor(char mot, char dir, int speed)
       analogWrite(ENA, newspeed);
       break;
 
-    case 'B':   // Controlling Motor B
+    case 'L':   // Controlling Left Motor
       if (dir == 'F') {
         digitalWrite(INB, HIGH);
       }
@@ -135,7 +148,7 @@ void Motor(char mot, char dir, int speed)
       analogWrite(ENB, newspeed);
       break;
 
-    case 'C':  // Controlling Both Motors
+    case 'B':  // Controlling 'B'oth Motors
       if (dir == 'F') {
         digitalWrite(INA, HIGH);
         digitalWrite(INB, HIGH);
