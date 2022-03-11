@@ -20,10 +20,22 @@ int distance; // variable for the distance measurement
 #ifdef DEBUG
   #define DEBUG_PRINTLN(x) Serial.println(x)
   #define DEBUG_PRINT(x) Serial.print(x)
-#elseifdef DEBUG
+#else
   #define DEBUG_PRINTLN(x)
   #define DEBUG_PRINT(x)
 #endif
+
+#include "BluetoothSerial.h"
+
+/* Check if Bluetooth configurations are enabled in the SDK */
+/* If not, then you have to recompile the SDK */
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
+
+BluetoothSerial SerialBT;
+
+char inputCmd = 's';
 
 void setup() {
   pinMode(ENA, OUTPUT);   // set all the motor control pins to outputs
@@ -35,19 +47,25 @@ void setup() {
   pinMode(echoPin, INPUT); // Sets the echoPin as an INPUT
   
   
-  #ifdef DEBUG
-    Serial.begin(9600); // // Serial Communication is starting with 9600 of baudrate speed
-  #endif
-  DEBUG_PRINTLN("Ultrasonic Sensor HC-SR04 Test"); // print some text in Serial Monitor
-  DEBUG_PRINTLN("with Arduino UNO R3");
+  Serial.begin(115200); // // Serial Communication is starting with 9600 of baudrate speed
+  SerialBT.begin();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  Forward(75);   
-  //TurnLeft(75);
-  delay(10);
-  Distance();
+
+  if (SerialBT.available())
+  {
+    inputCmd = SerialBT.read();
+    switch(inputCmd) {
+      case 'f':
+        Forward(100);
+        break;
+      case 's':
+        Forward(0);
+        break;
+    }
+  }
+  delay(20);
 }
 
 void Distance(){
