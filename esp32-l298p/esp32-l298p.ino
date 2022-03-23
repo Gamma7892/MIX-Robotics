@@ -1,22 +1,28 @@
 //  Motor A
-int const ENA = 10;  
-int const INA = 12;
+#define ENA 17
+#define INA 5 
+#define A_PWM 0 
 //  Motor B
-int const ENB = 11;  
-int const INB = 13;
+#define ENB 18
+#define INB 19 
+#define B_PWM 1
 
-int const MIN_SPEED = 27;   // Set to minimum PWM value that will make motors turn
-int  const ACCEL_DELAY = 50; // delay between steps when ramping motor speed up or down.
+// PWM variables for ESP32 functions
+#define PWM_Resolution 10
+const int MAX_DUTY_CYCLE = (int) (pow(2, PWM_Resolution) - 1);
+
+
+#define MIN_SPEED 27   // Set to minimum PWM value that will make motors turn
+#define ACCEL_DELAY 50 // delay between steps when ramping motor speed up or down.
 
 long duration; // variable for the duration of sound wave travel
 int distance; // variable for the distance measurement
 
-
-//Ultrasonics pins
+//Ultrasonics pi
 #define echoPin 8 // attach pin D8 Arduino to pin Echo of HC-SR04
 #define trigPin 7 //attach pin D7  Arduino to pin Trig of HC-SR04
 
-//#define DEBUG
+//define DEBUG
 #ifdef DEBUG
   #define DEBUG_PRINTLN(x) Serial.println(x)
   #define DEBUG_PRINT(x) Serial.print(x)
@@ -38,11 +44,16 @@ BluetoothSerial SerialBT;
 char inputCmd = 's';
 
 void setup() {
-  pinMode(ENA, OUTPUT);   // set all the motor control pins to outputs
-  pinMode(ENB, OUTPUT);
+  
   pinMode(INA, OUTPUT);
   pinMode(INB, OUTPUT);
+  // 5000 = 5 KHz
+  ledcSetup(A_PWM, 5000, PWM_Resolution);
+  ledcAttachPin(ENA, A_PWM);
+  ledcSetup(B_PWM, 5000, PWM_Resolution);
+  ledcAttachPin(ENB, B_PWM);
 
+  
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an OUTPUT
   pinMode(echoPin, INPUT); // Sets the echoPin as an INPUT
   
@@ -56,16 +67,20 @@ void loop() {
   if (SerialBT.available())
   {
     inputCmd = SerialBT.read();
+    DEBUG_PRINTLN(inputCmd);
     switch(inputCmd) {
       case 'f':
         Forward(100);
         break;
       case 's':
-        Forward(0);
+        Stop();
         break;
     }
   }
-  delay(20);
+  else {
+    DEBUG_PRINTLN("waiting...");
+  }
+  delay(5);
 }
 
 void Distance(){
@@ -132,7 +147,7 @@ void TurnRight (int s)
  * Motor function does all the heavy lifting of controlling the motors
  * mot = motor to control either 'R' or 'L'.  'B' controls both motors.
  * dir = Direction either 'F'orward or 'R'everse
- * speed = Speed.  Takes in 1-100 percent and maps to 0-255 for PWM control.  
+ * speed = Speed.  Takes in 0-100 percent and maps to 0-255 for PWM control.  
  * Mapping ignores speed values that are too low to make the motor turn.
  * In this case, anything below 27, but 0 still means 0 to stop the motors.
  */
@@ -143,7 +158,7 @@ void Motor(char mot, char dir, int speed)
   if (speed == 0)
     newspeed = 0;   // Don't remap zero, but remap everything else.
   else
-    newspeed = map(speed, 1, 100, MIN_SPEED, 255);
+    newspeed = map(speed, 0, 100, MIN_SPEED, MAX_DUTY_CYCLE);
 
   switch (mot) {
     case 'R':   // Controlling Right
@@ -153,7 +168,7 @@ void Motor(char mot, char dir, int speed)
       else if (dir == 'R') {
         digitalWrite(INB, LOW);
       }
-      analogWrite(ENA, newspeed);
+      ledcWrite(A_PWM, newspeed);
       break;
 
     case 'L':   // Controlling Left Motor
@@ -163,7 +178,7 @@ void Motor(char mot, char dir, int speed)
       else if (dir == 'R') {
         digitalWrite(INB, LOW);
       }
-      analogWrite(ENB, newspeed);
+      ledcWrite(B_PWM, newspeed);
       break;
 
     case 'B':  // Controlling 'B'oth Motors
@@ -173,10 +188,10 @@ void Motor(char mot, char dir, int speed)
       }
       else if (dir == 'R') {
         digitalWrite(INA, LOW);
-         digitalWrite(INB, LOW);
+        digitalWrite(INB, LOW);
       }
-      analogWrite(ENA, newspeed);
-      analogWrite(ENB, newspeed);
+      ledcWrite(A_PWM, newspeed);
+      ledcWrite(B_PWM, newspeed);
       break;
   }
 }
