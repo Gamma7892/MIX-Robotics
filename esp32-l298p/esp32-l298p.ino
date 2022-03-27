@@ -1,11 +1,11 @@
 //  Motor A
-#define ENA 17
-#define INA 5 
-#define A_PWM 0 
+#define Spd_A 19
+#define Dir_A 5
+#define A_PWM 0 //ESP pwm channel num
 //  Motor B
-#define ENB 18
-#define INB 19 
-#define B_PWM 1
+#define Spd_B 18
+#define Dir_B 17
+#define B_PWM 1 //ESP pwm channel num
 
 // PWM variables for ESP32 functions
 #define PWM_Resolution 10
@@ -45,13 +45,13 @@ char inputCmd = 's';
 
 void setup() {
   
-  pinMode(INA, OUTPUT);
-  pinMode(INB, OUTPUT);
+  pinMode(Dir_A, OUTPUT);
+  pinMode(Dir_B, OUTPUT);
   // 5000 = 5 KHz
   ledcSetup(A_PWM, 5000, PWM_Resolution);
-  ledcAttachPin(ENA, A_PWM);
+  ledcAttachPin(Spd_A, A_PWM);
   ledcSetup(B_PWM, 5000, PWM_Resolution);
-  ledcAttachPin(ENB, B_PWM);
+  ledcAttachPin(Spd_B, B_PWM);
 
   
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an OUTPUT
@@ -80,7 +80,6 @@ void loop() {
   else {
     DEBUG_PRINTLN("waiting...");
   }
-  delay(5);
 }
 
 void Distance(){
@@ -163,32 +162,32 @@ void Motor(char mot, char dir, int speed)
   switch (mot) {
     case 'R':   // Controlling Right
       if (dir == 'F') {
-        digitalWrite(INA, HIGH);
+        digitalWrite(Dir_A, HIGH);
       }
       else if (dir == 'R') {
-        digitalWrite(INB, LOW);
+        digitalWrite(Dir_B, LOW);
       }
       ledcWrite(A_PWM, newspeed);
       break;
 
     case 'L':   // Controlling Left Motor
       if (dir == 'F') {
-        digitalWrite(INB, HIGH);
+        digitalWrite(Dir_B, HIGH);
       }
       else if (dir == 'R') {
-        digitalWrite(INB, LOW);
+        digitalWrite(Dir_B, LOW);
       }
       ledcWrite(B_PWM, newspeed);
       break;
 
     case 'B':  // Controlling 'B'oth Motors
       if (dir == 'F') {
-        digitalWrite(INA, HIGH);
-        digitalWrite(INB, HIGH);
+        digitalWrite(Dir_A, HIGH);
+        digitalWrite(Dir_B, HIGH);
       }
       else if (dir == 'R') {
-        digitalWrite(INA, LOW);
-        digitalWrite(INB, LOW);
+        digitalWrite(Dir_A, LOW);
+        digitalWrite(Dir_B, LOW);
       }
       ledcWrite(A_PWM, newspeed);
       ledcWrite(B_PWM, newspeed);
